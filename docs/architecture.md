@@ -46,7 +46,7 @@ X\in\mathbb{R}^{B\times H\times W\times C},\qquad C\ge3
 
 where \(B\) is batch size, \(H\) is image height, \(W\) is image width, and the first three channels are interpreted as RGB. Channels after RGB are copied through unchanged.
 
-In normal execution, the output preserves batch size, height, width, channel count, input dtype and input output-device placement. An exceptional CUDA-to-CPU recovery returns the recovered output on CPU. Non-contiguous input is accepted; the pipeline does not require a contiguous source tensor.
+In normal execution, the output preserves batch size, height, width, channel count and input dtype. CPU-origin inputs remain CPU outputs, including when their RGB frames are temporarily processed on CUDA. CUDA-origin inputs normally remain on their incoming CUDA device; if the CUDA compatibility preflight fails or a recognized CUDA allocation failure triggers recovery, processing/output can fall back to CPU. Non-contiguous input is accepted; the pipeline does not require a contiguous source tensor.
 
 ## 3. Source layout and responsibilities
 
@@ -685,11 +685,54 @@ Five irregular longitudinal channels are generated with Python's seeded random.R
 
 **Holga 135**
 
-The mode generates a warped edge path and a diffusing sprocket/perforation modulation. Corner positions map to their corresponding top or bottom edge. Perforation pitch, initial spread and duty ratio are scaled to the image long edge. A five-period erf-based approximation forms the blurred perforation pattern; it is multiplied by an exponential path envelope:
+The mode generates a warped edge path and a diffusing sprocket/perforation modulation. Corner positions map to their corresponding top or bottom edge. Let (L=max(H,W)). The pitch, initial spread and perforation duty ratio are:
 
 \[
-P=M_{\mathrm{sprocket}}(d,a,seed)\exp\left[-\frac{d}{200sq}\right],
-\quad g_m=0.30
+p=\frac{4.75}{36}L,\qquad
+\sigma_0=\frac{0.50}{36}L,\qquad
+\delta=\frac{1.98}{4.75}
+\]
+
+The seed determines a repeatable phase:
+
+\[
+\phi=\frac{seed\ \&\ 0xFFFF}{65536}p
+\]
+
+After the warped edge distance is formed, the path includes an initial offset:
+
+\[
+d_p=d+\frac{2.1}{36}L
+\]
+
+The effective Gaussian spread increases with propagation distance:
+
+\[
+\sigma=\max\left(\sigma_0+0.35\sqrt{\max(d_p,0)p},10^{-4}\right)
+\]
+
+For along-edge coordinate (a), the phase-wrapped coordinate and Gaussian denominator are:
+
+\[
+u=\operatorname{remainder}(a-\phi,p)-0.5p,
+\qquad q_\sigma=\sigma\sqrt{2},
+\qquad h=0.5\delta p
+\]
+
+The five nearby repeated perforation intervals are accumulated with the error function:
+
+\[
+M=\max\left(\frac{1}{\delta}\sum_{j=-2}^{2}\frac{1}{2}\left[
+\operatorname{erf}\left(\frac{u-(jp-h)}{q_\sigma}\right)-
+\operatorname{erf}\left(\frac{u-(jp+h)}{q_\sigma}\right)
+\right],0\right)
+\]
+
+The final envelope uses the warped path (d) and radius multiplier:
+
+\[
+P=M\exp\left[-\frac{d}{200sq}\right],
+\qquad g_m=0.30
 \]
 
 #### Spectral attenuation and exposure
@@ -1012,6 +1055,24 @@ After masking with \(2^{32}-1\), the code applies integer xor-shift and multiply
 U=\frac{h+0.5}{2^{32}}
 \]
 
+The hash mixer uses the following sequence after the coordinate/seed/stream combination and 32-bit mask:
+
+\[
+x\leftarrow(x\oplus61)\oplus(x\gg16)
+\]
+\[
+x\leftarrow(x+(x\ll3))\ \&\ (2^{32}-1)
+\]
+\[
+x\leftarrow x\oplus(x\gg4)
+\]
+\[
+x\leftarrow(x\cdot0x27D4EB2D)\ \&\ (2^{32}-1)
+\]
+\[
+h=x\oplus(x\gg15)
+\]
+
 The integer operations and bitwise expressions execute on the same PyTorch device as the coordinate tensors. They are included in the CUDA compatibility preflight.
 
 The quintic fade curve is:
@@ -1125,7 +1186,13 @@ Film Grain is independent from Procedural Texture and Light Leak. It has a fixed
 
 #### Coordinate-hashed Gaussian field
 
-For each source pixel coordinate \((x,y)\), channel stream \(c\) and seed \(s\), the engine builds an int64 coordinate hash and applies 32-bit avalanche mixing. Two hash values are converted to uniform samples:
+For each source pixel coordinate \((x,y)\), channel stream (c) and seed (s), the engine first combines coordinates and stream into an int64 counter:
+
+\[
+b=(x\cdot73856093)\oplus(y\cdot19349663)\oplus(c\cdot83492791)\oplus(s\cdot2654435761)
+\]
+
+The counter and a second offset counter are passed through the 32-bit avalanche mixer described in the Procedural Texture section. Two hash values are converted to uniform samples:
 
 \[
 u_1=(h_1+0.5)/2^{32},\quad u_2=(h_2+0.5)/2^{32}

@@ -681,11 +681,17 @@ T=\exp\left[-\frac{d}{0.88\max(H,W)q}\right]
 P_v=0.20T\left(0.62+0.38\frac{l+1}{2}\right)
 \]
 
-Five irregular longitudinal channels are generated with Python's seeded random.Random; each channel adds a Gaussian-shaped streak along the selected edge, multiplied by \(T\). The combined field is clamped to \([0,1.6]\), with \(g_m=0.40\).
+Five irregular longitudinal channels are generated with Python's seeded random.Random. For channel \(i\), the center \(c_i\) is sampled from \(0.04L_a\) to \(0.96L_a\), width \(w_i\) from \(0.006L_a\) to \(0.022L_a\), and amplitude \(A_i\) from 0.32 to 0.78. Its field is:
+
+\[
+S_i=A_i\exp\left[-\frac{1}{2}\left(\frac{a-c_i}{\max(w_i,1)}\right)^2\right]T
+\]
+
+The mode adds these five streaks to the low-frequency veil and clamps the combined field to \([0,1.6]\), with \(g_m=0.40\). The random choices are scalar geometry parameters on CPU; the image-sized streak tensors are evaluated with PyTorch on the processing device.
 
 **Holga 135**
 
-The mode generates a warped edge path and a diffusing sprocket/perforation modulation. Corner positions map to their corresponding top or bottom edge. Let (L=max(H,W)). The pitch, initial spread and perforation duty ratio are:
+The mode generates a warped edge path and a diffusing sprocket/perforation modulation. Corner positions map to their corresponding top or bottom edge. Let \(L=\max(H,W)\). The pitch, initial spread and perforation duty ratio are:
 
 \[
 p=\frac{4.75}{36}L,\qquad
@@ -728,7 +734,7 @@ M=\max\left(\frac{1}{\delta}\sum_{j=-2}^{2}\frac{1}{2}\left[
 \right],0\right)
 \]
 
-The final envelope uses the warped path (d) and radius multiplier:
+The final envelope uses the warped path distance (d) and radius multiplier:
 
 \[
 P=M\exp\left[-\frac{d}{200sq}\right],

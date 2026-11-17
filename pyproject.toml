@@ -1,0 +1,20 @@
+[project]
+name = "zuanfilm-retrolab"
+version = "1.0.0"
+description = "Analog film-inspired photographic finishing for ComfyUI, featuring 50 deterministic film emulsions, adjustable Emulsion Response, optical effects, film grain, procedural texture, and automatic NVIDIA CUDA acceleration with CPU fallback."
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = []
+classifiers = [
+    "Operating System :: OS Independent",
+    "Environment :: GPU :: NVIDIA CUDA",
+]
+
+[project.urls]
+Repository = "https://github.com/zuanfilm/Zuanfilm-Retrolab"
+Documentation = "https://github.com/zuanfilm/Zuanfilm-Retrolab#readme"
+"Bug Tracker" = "https://github.com/zuanfilm/Zuanfilm-Retrolab/issues"
+
+[tool.comfy]
+PublisherId = "zuanfilm"
+DisplayName = "Zuanfilm Retrolab"

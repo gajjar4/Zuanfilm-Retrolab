@@ -1,0 +1,5 @@
+# Keep development and demonstration assets in GitHub, not in the Registry install archive.
+docs/
+tests/
+examples/
+PUBLISHING.md

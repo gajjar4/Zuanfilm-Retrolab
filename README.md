@@ -311,10 +311,38 @@ This is a creative photographic finishing tool, not a complete per-stock chemica
 
 ## Installation
 
-1. Copy or clone this repository into `ComfyUI/custom_nodes/Zuanfilm-Retrolab/`.
-2. Restart ComfyUI.
-3. Find **Zuanfilm Retrolab** under **Zuanfilm / RetroLab**.
+Zuanfilm Retrolab is published on the [Comfy Registry](https://registry.comfy.org/nodes/zuanfilm-retrolab) as **version 1.0.0**.
 
+### Recommended: ComfyUI Manager
+
+1. Open **ComfyUI Manager**.
+2. Open **Install Custom Nodes** (or **Custom Nodes Manager**, depending on your Manager version).
+3. Search for **Zuanfilm Retrolab**.
+4. Select the Registry entry and install it.
+5. Restart ComfyUI.
+
+### Comfy CLI
+
+You can also install the Registry package from a terminal using the command shown on its Registry page:
+
+```bash
+comfy node install zuanfilm-retrolab
+```
+
+Run the command in the ComfyUI workspace configured for your local installation, then restart ComfyUI.
+
+### Manual GitHub installation
+
+For a manual installation, clone the repository into your ComfyUI custom-nodes directory:
+
+```bash
+cd ComfyUI/custom_nodes
+git clone https://github.com/zuanfilm/Zuanfilm-Retrolab.git
+```
+
+Restart ComfyUI after cloning.
+
+Retrolab has no additional Python package dependencies beyond the PyTorch/Pillow runtime supplied by ComfyUI. It does not require model weights, API credentials or a separate CUDA configuration step. Its execution planner automatically selects CUDA when beneficial and supports CPU processing.
 
 ## Example workflow
 

@@ -6,6 +6,10 @@ Zuanfilm Retrolab is a post-rendering photographic finishing node for ComfyUI, i
 
 Bring photographic texture, expressive light behavior, tonal reversal and optical finishing to rendered images—directly inside your ComfyUI workflow. The node also includes an Anti-AI normalization control and a deterministic procedural micro-texture selector for tuning over-processed AI renders and exploring distinct surface character.
 
+![Zuanfilm Retrolab — ComfyUI interface, original photograph and finished photographic result](docs/images/retrolab-workflow-overview.jpg)
+
+*Zuanfilm Retrolab in a real ComfyUI workflow, showing the original
+photograph, creative controls and finished result.*
 
 ## At a glance
 

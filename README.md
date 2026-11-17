@@ -244,7 +244,7 @@ These controls are presented together as a compact two-column optical-finishing 
 
 ## Live Preview
 
-After the node executes once, the Live Preview appears above the controls. A compact **Before / After** switch beside the Live Preview heading compares the untouched input against the current processed composition. The original comparison image is transferred once per preview token and retained in browser memory; slider changes update the processed image without retransmitting the original. The comparison switch is a frontend-only control and adds no ComfyUI workflow input.
+After the first queued execution creates a preview source, the Live Preview appears above the controls. A compact **Before / After** switch beside the Live Preview heading compares the untouched input against the current processed composition. The original comparison image is transferred once per preview token and retained in browser memory; slider changes update the processed image without retransmitting the original. The comparison switch is a frontend-only control and adds no ComfyUI workflow input. The initial queue is required to create the preview source; subsequent control adjustments refresh the previews without rerunning the workflow.
 
 The panel provides two complementary inspection views:
 
@@ -343,6 +343,12 @@ git clone https://github.com/zuanfilm/Zuanfilm-Retrolab.git
 Restart ComfyUI after cloning.
 
 Retrolab has no additional Python package dependencies beyond the PyTorch/Pillow runtime supplied by ComfyUI. It does not require model weights, API credentials or a separate CUDA configuration step. Its execution planner automatically selects CUDA when beneficial and supports CPU processing.
+
+### First run: activate previews
+
+After installing Retrolab and restarting ComfyUI, connect an input image and **queue the workflow once**. This first execution creates the preview source used by the Live Preview and Grain & Texture Detail panels. Until that initial run completes, the node displays a message asking you to queue it.
+
+After the preview source has been created, changing Retrolab controls refreshes the previews automatically; you do not need to queue the workflow again for each adjustment. Queue the node again when you change the input image or when the preview source has expired or become unavailable.
 
 ## Example workflow
 

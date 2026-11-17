@@ -1,6 +1,7 @@
 # GitHub publication checklist
 
 - Repository name: `Zuanfilm-Retrolab`
+- Stable package version: `1.0.0` (GitHub release tag: `v1.0.0`).
 - ComfyUI custom-node folder: `ComfyUI/custom_nodes/Zuanfilm-Retrolab/`
 - Node display name: **Zuanfilm Retrolab**
 - Python dependencies: none beyond the PyTorch/Pillow runtime already provided by ComfyUI

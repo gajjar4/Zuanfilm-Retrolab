@@ -1,3 +1,18 @@
+## 1.0.0 — First stable public release
+
+Zuanfilm Retrolab is promoted to its first stable public release. Version 1.0.0 formalizes the user-validated 0.2.34-alpha implementation; this release milestone changes package version metadata and documentation only. It does not alter the established photographic algorithms, creative controls, preview behavior, workflow widget ordering or automatic execution planner.
+
+- **Photographic finishing:** twelve independent stages, including White Balance, Anti-AI normalization, Exposure, Bloom, Halation, Light Leak, the 50-look Color Film Emulsions Atlas, Sabattier, Soft Focus, Vignette, Procedural Texture and Film Grain.
+- **Emulsion Response:** adjustable 0.50×–3.00× response for all 50 deterministic emulsion profiles, with 1.00× preserving the established profile output and Neutral remaining an exact identity bypass.
+- **Creative interface:** Live Before / After preview, native-resolution Grain & Texture Detail preview, ten interface languages, compact two-column Light Leak controls, localized color-picker hover guidance and the validated visual separator hierarchy.
+- **Automatic execution:** workload-aware NVIDIA CUDA acceleration when beneficial, with CPU PyTorch support and full-batch CPU recovery after CUDA allocation failure. No device-selection controls are exposed in the creative UI.
+- **Precision and diagnostics:** float32 internal photographic calculations, normal ComfyUI image-tensor output behavior and a structured `report` STRING socket for execution diagnostics.
+- **Workflow example:** includes a functional ComfyUI example workflow and its matching input photograph under `examples/`.
+- **Validation:** 120 / 120 Python tests passed; frontend interaction smoke tests, JavaScript syntax validation and Python compilation passed. The 0.2.34 implementation was visually confirmed by the user in the target ComfyUI host. Automatic CUDA execution on an NVIDIA RTX 3080 Ti and CPU routing for a smaller workload were also confirmed through execution reports.
+- **Compatibility:** existing workflow widget/socket ordering and creative defaults are retained. The stable promotion does not introduce a workflow migration.
+
+The complete 0.2.x-alpha development history is retained below for provenance.
+
 ## 0.2.34-alpha — Correct ComfyUI DOM-widget height for subtle region separators
 
 - Corrected the three standard 1 px separators between Bloom/Halation, Anti-AI/Sabattier, Light Leak and Soft Focus/Vignette regions. The divider elements were already styled at 1 px, but ComfyUI assigned their custom DOM widgets its default 50 graph-unit minimum height, which rendered as thick horizontal bands at normal canvas zoom.

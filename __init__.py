@@ -1,6 +1,6 @@
 """Zuanfilm Retrolab — ComfyUI post-decode photographic finishing."""
 
-__version__ = "0.2.34-alpha"
+__version__ = "1.0.0"
 
 from .nodes import NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS
 from .preview import register_preview_routes

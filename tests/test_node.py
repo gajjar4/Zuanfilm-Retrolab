@@ -29,7 +29,7 @@ class ComfyNodeTests(unittest.TestCase):
         self.assertIn("ZuanfilmRetroLab", NODE_CLASS_MAPPINGS)
         self.assertEqual(NODE_DISPLAY_NAME_MAPPINGS["ZuanfilmRetroLab"], "Zuanfilm Retrolab")
         self.assertEqual(NODE_CLASS_MAPPINGS["ZuanfilmRetroLab"].CATEGORY, "Zuanfilm/RetroLab")
-        self.assertEqual(package.__version__, "0.2.34-alpha")
+        self.assertEqual(package.__version__, "1.0.0")
 
     def test_interface_has_reduced_controls_and_current_effect_limits(self):
         required = NODE_CLASS_MAPPINGS["ZuanfilmRetroLab"].INPUT_TYPES()["required"]

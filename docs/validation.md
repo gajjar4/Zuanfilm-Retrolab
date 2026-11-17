@@ -1,3 +1,11 @@
+## 1.0.0 — Stable release validation
+
+- The 1.0.0 stable release promotes the 0.2.34-alpha implementation after visual confirmation in the user's ComfyUI host. The accepted interface includes subtle 1 px separators between the main effect regions and the distinct 2 px white boundary above Film Grain / Procedural Texture.
+- The user confirmed the Emulsion Response feature works as intended across the 50-look Color Film Emulsions Atlas. The stable baseline retains its 0.50×–3.00× range and exact 1.00× profile behavior.
+- Automatic execution routing was confirmed through host execution reports: a high-resolution workload used the NVIDIA RTX 3080 Ti CUDA path, while a smaller workload selected CPU without a CUDA fallback.
+- Automated validation: **120 / 120 Python tests passed**; frontend interaction smoke test, JavaScript syntax validation and Python compilation passed.
+- This is a release promotion of the already tested baseline. No photographic algorithms, widget/socket ordering, UI control defaults or execution-planner behavior are changed by the version update.
+
 ## 0.2.34-alpha — Correct minimum sizing for standard region separators
 
 - Python: **120 / 120 tests passed** in the working tree.

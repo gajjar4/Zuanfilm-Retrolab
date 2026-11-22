@@ -116,7 +116,8 @@ const api = {
 
 const source = fs.readFileSync(new URL('../js/zuanfilm_retrolab.js', import.meta.url), 'utf8')
   .replace(/^import\s+\{\s*app\s*\}\s+from\s+["'][^"']+["'];\s*\n/m, '')
-  .replace(/^import\s+\{\s*api\s*\}\s+from\s+["'][^"']+["'];\s*\n/m, '');
+  .replace(/^import\s+\{\s*api\s*\}\s+from\s+["'][^"']+["'];\s*\n/m, '')
+  .replace(/^export (async )?function /gm, '$1function ');
 vm.runInNewContext(source, {
   app, api, document, window, localStorage, setTimeout, clearTimeout, console,
   requestAnimationFrame(callback) { animationFrames.push(callback); return animationFrames.length; },

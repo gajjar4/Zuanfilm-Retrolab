@@ -51,6 +51,13 @@ const DARKROOM_STYLE = `
 .zrl-menu { border-radius: 10px !important; border: 1px solid var(--zrl-line) !important; background: #1E1C1A !important; }
 `;
 let darkroomStyleInstalled = false;
+export function installDarkroomStyle() {
+    if (darkroomStyleInstalled) return;
+    const style = document.createElement("style");
+    style.textContent = DARKROOM_STYLE;
+    (document.head || document.body).append(style);
+    darkroomStyleInstalled = true;
+}
 // Control groups shown one at a time beneath the preview. The widget lists
 // drive the "changed" dot on each tab.
 const CONTROL_TABS = Object.freeze([
@@ -543,7 +550,7 @@ function getInitialCanvasScale(node, extensionApp = app) {
     return 1;
 }
 
-function applyInitialNodeWidth(node, extensionApp = app) {
+export function applyInitialNodeWidth(node, extensionApp = app) {
     if (!node || node._zrlInitialWidthApplied) return;
     const scale = Math.max(INITIAL_NODE_MIN_SCALE, getInitialCanvasScale(node, extensionApp));
     const targetWidth = Math.max(
@@ -964,7 +971,7 @@ function saveStoredLanguage(code) {
     } catch (_) { /* Language remains active for this session. */ }
 }
 
-function makeText(text, size = "11px") {
+export function makeText(text, size = "11px") {
     const element = document.createElement("span");
     element.textContent = text;
     element.style.fontSize = size;
@@ -1040,7 +1047,7 @@ function createPreviewModeControl() {
     };
 }
 
-function applyPreviewMode(ui) {
+export function applyPreviewMode(ui) {
     const mode = ui.compare.mode();
     const hasBefore = ui.beforeImage.style.visibility === "visible";
     const position = mode === "split" ? ui.splitPosition : mode === "before" ? 100 : 0;
@@ -1049,7 +1056,7 @@ function applyPreviewMode(ui) {
     ui.split.style.left = `${position}%`;
 }
 
-function renderActiveCompositionPreview(node) {
+export function renderActiveCompositionPreview(node) {
     const ui = node?._zrlPreviewUI;
     if (!ui) return;
     if (node._zrlVideo) {
@@ -1661,7 +1668,7 @@ function createEmulsionAtlasControl(node, backendWidget, temperatureWidget, tint
     };
 }
 
-function createPreviewPanel() {
+export function createPreviewPanel() {
     const panel = document.createElement("div");
     panel.className = "zrl-dr zrl-preview";
 
@@ -2030,7 +2037,7 @@ function createLightLeakControls(node, leakColorUI) {
     };
 }
 
-function addDOMWidgetAt(node, name, element, beforeWidgetName = null, widgetOptions = {}) {
+export function addDOMWidgetAt(node, name, element, beforeWidgetName = null, widgetOptions = {}) {
     node.addDOMWidget(name, "custom", element, {
         serialize: false,
         hideOnZoom: false,
@@ -2356,7 +2363,7 @@ function syncGrainControls(node) {
     }
 }
 
-function updateRangeFill(input) {
+export function updateRangeFill(input) {
     const min = Number(input.min);
     const max = Number(input.max);
     const value = Number(input.value);
@@ -2906,7 +2913,7 @@ function setLanguageForAllNodes(sourceNode, code) {
     sourceNode?._zrlApplyLanguage?.(language);
 }
 
-async function deletePreviewToken(token) {
+export async function deletePreviewToken(token) {
     if (!token) return;
     try {
         await api.fetchApi(`${PREVIEW_ENDPOINT}/${encodeURIComponent(token)}`, { method: "DELETE" });
@@ -2915,7 +2922,7 @@ async function deletePreviewToken(token) {
     }
 }
 
-async function deleteVideoPreviewToken(token) {
+export async function deleteVideoPreviewToken(token) {
     if (!token) return;
     try {
         await api.fetchApi(`${VIDEO_PREVIEW_ENDPOINT}/${encodeURIComponent(token)}`, { method: "DELETE" });
@@ -2991,7 +2998,7 @@ async function requestPreview(node) {
     }
 }
 
-function createVideoPlayerControls(node) {
+export function createVideoPlayerControls(node) {
     const row = document.createElement("div");
     row.style.display = "flex";
     row.style.alignItems = "center";
@@ -3055,7 +3062,7 @@ function createVideoPlayerControls(node) {
     return { row, play, scrubber, label, fps };
 }
 
-function resetVideoState(node, token = null) {
+export function resetVideoState(node, token = null) {
     const video = node._zrlVideo;
     setVideoPlaying(node, false);
     Object.assign(video, {
@@ -3083,7 +3090,7 @@ function setVideoPlaying(node, playing) {
     pumpVideoRender(node);
 }
 
-function showVideoFrame(node) {
+export function showVideoFrame(node) {
     const video = node._zrlVideo;
     const ui = node._zrlPreviewUI;
     const player = node._zrlVideoPlayerUI;
@@ -3103,7 +3110,7 @@ function showVideoFrame(node) {
     player.label.textContent = `${Math.min(index * video.stride + 1, video.sourceCount)} / ${video.sourceCount}`;
 }
 
-function restartVideoRender(node) {
+export function restartVideoRender(node) {
     const video = node._zrlVideo;
     const translation = getTranslation(node._zrlLanguage || "en");
     if (!video.token) {
@@ -3116,7 +3123,7 @@ function restartVideoRender(node) {
     pumpVideoRender(node);
 }
 
-async function pumpVideoRender(node) {
+export async function pumpVideoRender(node) {
     const video = node._zrlVideo;
     const ui = node._zrlPreviewUI;
     if (video.pumping || !video.token) return;
@@ -3136,12 +3143,12 @@ async function pumpVideoRender(node) {
                 if (!video.fresh[index]) indices.push(index);
             }
             if (!indices.length) break;
-            const response = await api.fetchApi(VIDEO_PREVIEW_ENDPOINT, {
+            const response = await api.fetchApi(video.endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     token,
-                    settings: readNodeSettings(node),
+                    ...video.payload(),
                     frames: indices,
                     include_original: indices.some((index) => !video.original[index]),
                 }),
@@ -3228,7 +3235,7 @@ const DOM_WIDGET_MARGIN = 10;
 
 // Fixed-height DOM widgets report their content height plus that inset, so only
 // the preview absorbs spare node height and nothing is clipped or overlaps.
-function contentHeight(element) {
+export function contentHeight(element) {
     const height = () => (element.hidden ? 0 : element.scrollHeight + 2 * DOM_WIDGET_MARGIN);
     return { getMinHeight: height, getMaxHeight: height };
 }
@@ -3315,19 +3322,17 @@ app.registerExtension({
             // otherwise draw over the Darkroom panels.
             for (const linked of noiseSeedWidget.linkedWidgets || []) linked.hidden = true;
 
-            if (!darkroomStyleInstalled) {
-                const style = document.createElement("style");
-                style.textContent = DARKROOM_STYLE;
-                (document.head || document.body).append(style);
-                darkroomStyleInstalled = true;
-            }
+            installDarkroomStyle();
             this.properties = this.properties || {};
 
             const previewUI = createPreviewPanel();
             this._zrlPreviewUI = previewUI;
             previewUI.compare.setOnChange(() => renderActiveCompositionPreview(this));
             if (isVideo) {
-                this._zrlVideo = { generation: 0, playing: false, timer: null, pumping: false };
+                this._zrlVideo = {
+                    generation: 0, playing: false, timer: null, pumping: false,
+                    endpoint: VIDEO_PREVIEW_ENDPOINT, payload: () => ({ settings: readNodeSettings(this) }),
+                };
                 this._zrlVideoPlayerUI = createVideoPlayerControls(this);
                 previewUI.panel.append(this._zrlVideoPlayerUI.row);
                 resetVideoState(this);

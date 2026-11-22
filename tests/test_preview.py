@@ -392,6 +392,9 @@ class LivePreviewTests(unittest.TestCase):
             def delete(self, path):
                 self.paths.append(("DELETE", path))
                 return lambda function: function
+            def get(self, path):
+                self.paths.append(("GET", path))
+                return lambda function: function
         class FakePromptServer:
             instance = types.SimpleNamespace(routes=FakeRoutes())
         server_module = types.ModuleType("server")
@@ -403,6 +406,8 @@ class LivePreviewTests(unittest.TestCase):
         self.assertIn(("DELETE", "/retrolab/preview/{token}"), FakePromptServer.instance.routes.paths)
         self.assertIn(("POST", "/retrolab/video_preview"), FakePromptServer.instance.routes.paths)
         self.assertIn(("DELETE", "/retrolab/video_preview/{token}"), FakePromptServer.instance.routes.paths)
+        self.assertIn(("GET", "/retrolab/fx/catalog"), FakePromptServer.instance.routes.paths)
+        self.assertIn(("POST", "/retrolab/fx/preview"), FakePromptServer.instance.routes.paths)
 
     def test_video_preview_keeps_compact_uint8_proxy_and_samples_long_clips(self):
         clip = self.image.expand(500, -1, -1, -1)

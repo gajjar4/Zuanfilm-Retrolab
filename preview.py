@@ -29,6 +29,8 @@ from .core.halation import normalize_halation_color
 from .core.light_leak import LEAK_MODES, POSITIONS, normalize_hex_color
 from .core.pipeline import DEFAULT_GRAIN_SEED, RetroLabSettings, process_single_image
 from .core.noise_texture import NOISE_TEXTURES, apply_noise_texture, normalize_noise_texture, normalize_noise_blend_mode
+from .core import fx
+from .core.fx.common import FxContext
 
 _PREVIEW_CACHE: OrderedDict[str, dict[str, Any]] = OrderedDict()
 _CACHE_LOCK = threading.RLock()
@@ -291,19 +293,8 @@ def _encode_jpeg(rgb_uint8: torch.Tensor) -> str:
     return base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
-@torch.no_grad()
-def render_video_preview_frames(
-    token: str,
-    payload: dict[str, Any] | None,
-    frame_indices: list[Any],
-    *,
-    include_original: bool = False,
-) -> dict[str, Any]:
-    """Render a few proxy frames of a cached clip with the full finishing chain.
-
-    Grain and texture are included so the preview shows their frame-to-frame
-    motion; each frame keeps its source batch index for deterministic grain.
-    """
+def _render_video_frames(token: str, frame_indices: list[Any], include_original: bool, process) -> dict[str, Any]:
+    """Render up to eight cached proxy frames with ``process(frame, source_index)``."""
     now = time.monotonic()
     with _CACHE_LOCK:
         entry = _VIDEO_CACHE.get(str(token))
@@ -311,9 +302,8 @@ def render_video_preview_frames(
             _VIDEO_CACHE.pop(str(token), None)
             entry = None
     if entry is None:
-        raise KeyError("Video preview expired. Queue Zuanfilm Retrolab Video once to refresh its preview source.")
+        raise KeyError("Video preview expired. Queue the node once to refresh its preview source.")
 
-    settings = normalize_preview_settings(payload)
     frames = entry["frames"]
     count = int(frames.shape[0])
     requested = []
@@ -330,7 +320,7 @@ def render_video_preview_frames(
     rendered = []
     for index in requested:
         source = frames[index]
-        processed = process_single_image(source.to(torch.float32) / 255.0, settings, frame_index=entry["source_indices"][index])
+        processed = process(source.to(torch.float32) / 255.0, entry["source_indices"][index])
         item = {"index": index, "jpg": _encode_jpeg((processed.clamp(0.0, 1.0) * 255.0).round().to(torch.uint8))}
         if include_original:
             item["original_jpg"] = _encode_jpeg(source)
@@ -344,6 +334,49 @@ def render_video_preview_frames(
         "size": [int(frames.shape[2]), int(frames.shape[1])],
         "source_size": [int(entry["dimensions"][1]), int(entry["dimensions"][0])],
     }
+
+
+@torch.no_grad()
+def render_video_preview_frames(
+    token: str,
+    payload: dict[str, Any] | None,
+    frame_indices: list[Any],
+    *,
+    include_original: bool = False,
+) -> dict[str, Any]:
+    """Render a few proxy frames of a cached clip with the full finishing chain.
+
+    Grain and texture are included so the preview shows their frame-to-frame
+    motion; each frame keeps its source batch index for deterministic grain.
+    """
+    settings = normalize_preview_settings(payload)
+    return _render_video_frames(token, frame_indices, include_original,
+                                lambda frame, source_index: process_single_image(frame, settings, frame_index=source_index))
+
+
+@torch.no_grad()
+def render_fx_video_frames(token: str, stack: Any, frame_indices: list[Any], *, include_original: bool = False) -> dict[str, Any]:
+    """Render cached clip frames through a Retrolab FX stack."""
+    layers = fx.normalize_stack(stack)
+    return _render_video_frames(token, frame_indices, include_original,
+                                lambda frame, source_index: fx.apply_stack(frame, layers, FxContext(frame_index=source_index)))
+
+
+@torch.no_grad()
+def render_fx_preview(token: str, stack: Any, *, include_original: bool = False) -> dict[str, Any]:
+    """Render the cached composition proxy through a Retrolab FX stack."""
+    entry = _get_preview_entry(token)
+    if entry is None:
+        raise KeyError("Preview expired. Queue the node once to refresh its preview source.")
+    processed = fx.apply_stack(entry["full"], fx.normalize_stack(stack), FxContext())
+    result = {
+        "full_png": _encode_png(processed),
+        "full_size": [int(processed.shape[1]), int(processed.shape[0])],
+        "source_size": [int(entry["dimensions"][1]), int(entry["dimensions"][0])],
+    }
+    if include_original:
+        result["original_png"] = _encode_png(entry["full"])
+    return result
 
 
 @torch.no_grad()
@@ -458,6 +491,28 @@ def register_preview_routes() -> bool:
         async def retrolab_discard_video_preview(request):
             discard_video_preview_cache(request.match_info.get("token", ""))
             return web.json_response({"ok": True})
+
+        @prompt_server.routes.get("/retrolab/fx/catalog")
+        async def retrolab_fx_catalog(request):
+            return web.json_response(fx.catalog_payload())
+
+        @prompt_server.routes.post("/retrolab/fx/preview")
+        async def retrolab_fx_preview(request):
+            try:
+                payload = await request.json()
+                if not isinstance(payload, dict) or not isinstance(payload.get("token"), str) or len(payload["token"]) != 32:
+                    return web.json_response({"error": "Invalid preview token."}, status=400)
+                token, stack = payload["token"], payload.get("stack", [])
+                include_original = payload.get("include_original") is True
+                if payload.get("frames") is not None:
+                    result = await asyncio.to_thread(render_fx_video_frames, token, stack, payload.get("frames"), include_original=include_original)
+                else:
+                    result = await asyncio.to_thread(render_fx_preview, token, stack, include_original=include_original)
+                return web.json_response(result)
+            except KeyError as exc:
+                return web.json_response({"error": str(exc).strip("'")}, status=404)
+            except Exception as exc:
+                return web.json_response({"error": f"FX preview render failed: {type(exc).__name__}: {exc}"}, status=500)
 
         prompt_server._retrolab_preview_routes_registered = True
         return True

@@ -16,6 +16,7 @@ photograph, creative controls and finished result.*
 - **Twelve finishing stages**, including a 50-look Color Film Emulsions Atlas, deterministic procedural texture and Film Grain, plus independent White Balance, Anti-AI and Exposure corrections in one creative node.
 - **Live Preview** that fills the node, with a draggable Before / After split and a native-resolution **Grain & Texture Detail** loupe. Controls are grouped into six tabs (Color, Light, Tone, Leak, Optics, Grain) so the node stays compact.
 - **Zuanfilm Retrolab Video** node for frame batches: the same controls with a live player (play/pause, frame scrubber, 8–30 fps). The preview keeps only a 384 px uint8 proxy of up to 240 sampled frames on the CPU, and renders the frame under the playhead first after every change.
+- **Zuanfilm Retrolab FX** node: a Photoshop-style stack of 25 creative effects (blurs, light, retro, print, glitch, adjustments) and a full Dither Lab, with looks, on-photo handles and the same live preview and video player. See [Retrolab FX](#retrolab-fx).
 - **Ten interface languages:** English, Simplified Chinese, Japanese, Spanish, Portuguese, French, Russian, German, Hindi and Arabic.
 - **Independent deterministic seeds** for procedural texture, Film Grain and Light Leak geometry.
 - **Automatic hardware adaptation:** sufficiently large workloads can use available NVIDIA CUDA acceleration without any device controls in the creative interface; CPU-only PyTorch remains supported.
@@ -242,6 +243,28 @@ These controls are presented together as a compact two-column optical-finishing 
 **Soft Focus** blurs the image in linear RGB, then blends the blurred field over the original using an aspect-correct radial mask. The exact center remains sharp; blur contribution grows smoothly toward the corners. It is not a uniform full-frame blur.
 
 **Vignette** uses an aspect-ratio-correct radial distance field normalized from the image center to its corners. Its exposure multiplier is applied in linear RGB, creating a photographic falloff rather than a color overlay.
+
+## Retrolab FX
+
+**Zuanfilm Retrolab FX** is a companion node for creative effects, so the main Retrolab node stays compact. Effects are added as layers: drag ⋮⋮ to reorder, click the dot to hide a layer, and set each layer's blend mode (Normal, Multiply, Screen, Overlay, Soft/Hard Light, Lighten, Darken, Difference, Add, Color, Luminosity) and opacity. Only the selected layer's controls are shown. The whole stack is saved in one `fx_stack` workflow value, so new effects never shift saved widgets.
+
+| Group | Effects |
+|---|---|
+| Blur | Directional, Zoom, Spin, Tilt-shift, Lens blur (circle / hexagon / cat-eye bokeh, optional focus area) |
+| Light | Anamorphic streaks, God rays, Prism |
+| Retro | Chromatic aberration, VHS, CRT, Film frame (35mm / Polaroid / Instax), Gate weave |
+| Print | Halftone (mono or CMYK screen angles), Gradient map, Risograph |
+| Glitch | Pixel sort, Block shift, JPEG crunch |
+| Adjust | Curves, HSL (8 colour bands), Lift / gamma / gain wheels, Clarity, Sharpen |
+| Dither Lab | Floyd–Steinberg, Atkinson, Jarvis-Judice-Ninke, Stucki, Burkes, Sierra, Sierra Two-Row, Sierra Lite, Bayer 2×2/4×4/8×8, Cluster dot, Blue noise, White noise, Threshold onto 1-bit, Game Boy, CGA, EGA, PICO-8, C64, CRT, Riso, Sepia, Thermal, per-channel levels or custom palettes |
+
+- **Handles on the photo:** blur centres, the directional angle and the tilt-shift band are dragged directly on the preview.
+- **Looks:** twelve built-in looks, plus **＋ Save look**, stored in your ComfyUI user folder (`retrolab/fx_looks.json`). Each thumbnail is rendered from your image.
+- **Preview tools:** Split / Before / After, A/B snapshots, histogram, 🎲 random look, and ◐ hold to see the original.
+- **Mask input (optional):** the stack is applied only where the mask is white.
+- **Batches:** frame batches get the play / scrub player; VHS, gate weave and block shift vary per frame.
+
+Error-diffusion dithering is computed along anti-diagonal wavefronts, which gives exactly the same result as a pixel-by-pixel raster scan while processing each diagonal at once. All effects are pure PyTorch with sizes in reference pixels (1024 px long edge), so the reduced live preview matches the full-resolution render.
 
 ## Live Preview
 

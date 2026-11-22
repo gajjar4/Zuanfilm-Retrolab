@@ -11,6 +11,8 @@ Bring photographic texture, expressive light behavior, tonal reversal and optica
 *Zuanfilm Retrolab in a real ComfyUI workflow, showing the original
 photograph, creative controls and finished result.*
 
+**Showcase video:** [Retrolab FX, Dither Lab, Video and Darkroom in 42 seconds](docs/images/retrolab-fx-showcase.mp4) (built from real node screenshots).
+
 ## At a glance
 
 - **Twelve finishing stages**, including a 50-look Color Film Emulsions Atlas, deterministic procedural texture and Film Grain, plus independent White Balance, Anti-AI and Exposure corrections in one creative node.
